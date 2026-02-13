@@ -1,9 +1,9 @@
+// -------------------- server.js --------------------
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const nodemailer = require("nodemailer");
 const cors = require("cors");
 
 const app = express();
@@ -37,15 +37,6 @@ const diarySchema = new mongoose.Schema({
 const User = mongoose.model("User", userSchema);
 const Diary = mongoose.model("Diary", diarySchema);
 
-// ------------------ EMAIL ------------------
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
-
 // ------------------ ROUTES ------------------
 
 // SIGNUP
@@ -63,14 +54,10 @@ app.post("/signup", async (req, res) => {
     const user = new User({ name, email, phone, password: hashed, otp });
     await user.save();
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Love Diary OTP",
-      text: "Your OTP is " + otp
-    });
+    // Email er jaygay console log
+    console.log(`Signup OTP for ${email}: ${otp}`);
 
-    res.json({ msg: "OTP sent" });
+    res.json({ msg: "OTP generated (check console for now)" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server error" });
@@ -86,7 +73,7 @@ app.post("/verify", async (req, res) => {
     if (!user || user.otp !== otp) return res.status(400).json({ msg: "Invalid OTP" });
 
     user.verified = true;
-    user.otp = null; // clear OTP after verification
+    user.otp = null;
     await user.save();
 
     res.json({ msg: "Verified" });
